@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from nnunetv2.training.loss.compound_losses import DC_and_BCE_loss, DC_and_CE_loss
-from nnunetv2.training.loss.cldice import soft_dice_cldice
+from nnunetv2.training.loss.cldice import SoftDiceCLDiceLoss
 from nnunetv2.training.loss.deep_supervision import DeepSupervisionWrapper
 from nnunetv2.training.loss.dice import MemoryEfficientSoftDiceLoss
 from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
@@ -11,7 +11,7 @@ from nnunetv2.utilities.helpers import softmax_helper_dim1
 
 class nnUNetTrainerCLDiceLoss(nnUNetTrainer):
     def _build_loss(self):
-        loss = soft_dice_cldice()
+        loss = SoftDiceCLDiceLoss()
 
         if self.enable_deep_supervision:
             deep_supervision_scales = self._get_deep_supervision_scales()

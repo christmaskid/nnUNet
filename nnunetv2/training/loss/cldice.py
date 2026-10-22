@@ -102,5 +102,12 @@ class soft_dice_cldice(nn.Module):
         tprec = (torch.sum(torch.multiply(skel_pred, y_true))+self.smooth)/(torch.sum(skel_pred)+self.smooth)    
         tsens = (torch.sum(torch.multiply(skel_true, y_pred))+self.smooth)/(torch.sum(skel_true)+self.smooth)    
         cl_dice = 1.- 2.0*(tprec*tsens)/(tprec+tsens)
-        combined_dice = (1.0-self.alpha)*dice+self.alpha*cl_dice
-        return -combined_dice
+        return (1.0-self.alpha)*dice+self.alpha*cl_dice
+
+class SoftDiceCLDiceLoss(nn.Module):
+    def __init__(self, iter_=3, alpha=0.5, smooth = 1., exclude_background=False):
+        super(SoftDiceCLDiceLoss, self).__init__()
+        self.cldice = soft_dice_cldice(iter_=iter_, alpha=alpha, smooth=smooth, exclude_background=exclude_background)
+
+    def forward(self, y_true, y_pred):
+        return -self.cldice(y_true, y_pred)
