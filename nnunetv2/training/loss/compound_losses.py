@@ -154,3 +154,32 @@ class DC_and_topk_loss(nn.Module):
 
         result = self.weight_ce * ce_loss + self.weight_dice * dc_loss
         return result
+
+class Custom_compound_scheduled_loss(nn.Module):
+    # loss = loss_1 * (1 - alpha) + loss_2 * alpha
+    def __init__(self, loss_1, loss_2, 
+            initial_alpha=1.0, decay_factor=0.01, 
+            max_epoch=100, decay_type='linear'):
+        super().__init__()
+        self.loss_1 = loss_1
+        self.loss_2 = loss_2
+        self.alpha = initial_alpha
+        self.decay_factor = decay_factor
+        self.max_epoch = max_epoch
+        self.epoch = 0  # Initialize epoch counter
+        self.decay_type = decay_type
+
+    def set_epoch(self, epoch):
+        self.epoch = epoch
+        # Update alpha based on the decay factor and current epoch
+        if self.decay_type == 'linear':
+            self.alpha = max(0.0, 1.0 - (self.decay_factor * epoch / self.max_epoch))
+        elif self.decay_type == 'exponential':
+            self.alpha = max(0.0, 1.0 * (self.decay_factor ** (epoch / self.max_epoch)))
+        else:
+            raise ValueError(f"Unsupported decay type: {self.decay_type}")
+    
+    def forward(self, net_output: torch.Tensor, target: torch.Tensor):
+        loss_1_value = self.loss_1(net_output, target)
+        loss_2_value = self.loss_2(net_output, target)
+        return loss_1_value * (1 - self.alpha) + loss_2_value * self.alpha
